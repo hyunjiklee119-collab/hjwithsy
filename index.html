@@ -3,34 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>웨딩 예산 집행 및 자금 운용 종합 대시보드</title>
+  <title>웨딩 예산 및 자금 운용 종합 대시보드 (3-Tab Timeline Edition)</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for data visualization -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS for local Excel/CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#f0f7ff',
-              100: '#e0effe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
-            }
+            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
           }
         }
       }
@@ -40,7 +32,8 @@
     body {
       font-family: 'Pretendard', sans-serif;
       background-color: #f8fafc;
-      color: #1e293b;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
     }
     .accordion-content {
       transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
@@ -49,7 +42,7 @@
       opacity: 0;
     }
     .accordion-content.open {
-      max-height: 1200px;
+      max-height: 2400px;
       opacity: 1;
     }
     .rotate-chevron {
@@ -58,1049 +51,682 @@
     .rotate-chevron.open {
       transform: rotate(180deg);
     }
-    /* Hide scrollbars for clean look */
+    /* Hide scrollbar for Chrome, Safari and Opera */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
+    /* Hide scrollbar for IE, Edge and Firefox */
     .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    @media print {
+      header, .no-print, nav.mobile-bottom-nav { display: none !important; }
+      body { background: white !important; padding: 0 !important; }
+      .page-break { page-break-after: always; }
+      .accordion-content { max-height: none !important; opacity: 1 !important; display: block !important; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-blue-100 selection:text-blue-900">
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-indigo-100 selection:text-indigo-900 pb-24 lg:pb-8">
 
-  <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3.5 gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <i data-lucide="gem" class="w-5 h-5"></i>
+  <!-- ================= TOP HEADER NAVIGATION ================= -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-2.5 sm:py-3.5 gap-2">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-700 via-blue-600 to-indigo-900 flex items-center justify-center text-white shadow-sm shrink-0">
+            <i data-lucide="gem" class="w-4 h-4 sm:w-5 sm:h-5 text-amber-200"></i>
           </div>
-          <div>
-            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-              웨딩 예산 및 자금 운용 대시보드
-              <span class="text-xs px-2 py-0.5 font-semibold bg-blue-50 text-blue-700 rounded-full border border-blue-200/80">실시간 분석</span>
-            </h1>
-            <p class="text-xs text-slate-500 mt-0.5">기준 시점: 2026년 10월 기준 (총 예산 49,452,680원 통합 관리)</p>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h1 class="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 truncate">
+                웨딩 예산 대시보드
+              </h1>
+              <span class="text-[10px] sm:text-[11px] px-1.5 py-0.2 sm:px-2 sm:py-0.5 font-bold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200 shrink-0">
+                무대출
+              </span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
+              세이프박스: <strong id="headerSafebox" class="text-emerald-700 font-extrabold">9,379,546원</strong>
+            </p>
           </div>
         </div>
 
-        <!-- Tab Switch Buttons -->
-        <div class="flex bg-slate-100/90 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
-          <button id="tab-btn-1" onclick="switchTab(1)" 
-            class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-blue-600 shadow-sm border border-slate-200/50">
-            <i data-lucide="pie-chart" class="w-4 h-4"></i>
-            <span>1. 예산 집행 보고서</span>
+        <!-- Desktop Tab Bar & Utilities -->
+        <div class="flex items-center gap-2 shrink-0">
+          <nav class="hidden md:flex bg-slate-100 p-1 rounded-xl border border-slate-200" aria-label="Tabs">
+            <button id="tab-btn-1" onclick="switchTab(1)" 
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-xs border border-slate-200/80">
+              <i data-lucide="clock-arrow-up" class="w-4 h-4"></i>
+              <span>1. 4월 이전 준비</span>
+            </button>
+            <button id="tab-btn-2" onclick="switchTab(2)" 
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>2. 4월 본식·신행</span>
+            </button>
+            <button id="tab-btn-3" onclick="switchTab(3)" 
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
+              <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+              <span>3. 자금 운용 종합</span>
+            </button>
+          </nav>
+
+          <button onclick="openUploadModal()" class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg transition-colors">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <span class="text-xs">엑셀연동</span>
           </button>
-          <button id="tab-btn-2" onclick="switchTab(2)" 
-            class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
-            <i data-lucide="wallet" class="w-4 h-4"></i>
-            <span>2. 자금 운용 및 조달 계획</span>
+          <button onclick="window.print()" class="hidden sm:flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg transition-colors">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3.5 sm:py-6 space-y-4 sm:space-y-6">
 
-    <!-- ========================================== -->
-    <!-- TAB 1: 웨딩 예산 및 집행 보고서 -->
-    <!-- ========================================== -->
-    <div id="tab-content-1" class="space-y-6">
+    <!-- Global Top Summary Banner (Mobile-Optimized Horizontal Scroll / Grid) -->
+    <div class="flex sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-2.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x">
       
-      <!-- Top Alert Notification -->
-      <div class="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-white border border-blue-100 text-slate-800 flex items-start sm:items-center justify-between gap-3 shadow-sm">
-        <div class="flex items-center gap-3">
-          <div class="p-2 rounded-lg bg-blue-600 text-white shrink-0">
-            <i data-lucide="sparkles" class="w-4 h-4"></i>
+      <div class="min-w-[150px] sm:min-w-0 flex-1 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs snap-start shrink-0 sm:shrink">
+        <div class="flex items-center justify-between text-slate-500 mb-0.5">
+          <span class="text-[11px] font-medium">총 예산</span>
+          <span class="p-0.5 rounded bg-slate-100 text-slate-600"><i data-lucide="receipt" class="w-3 h-3"></i></span>
+        </div>
+        <div class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+          49,452,680<span class="text-[10px] font-normal text-slate-500 ml-0.5">원</span>
+        </div>
+        <div class="text-[10px] text-slate-400 mt-0.5">전체 8대 품목</div>
+      </div>
+
+      <div class="min-w-[150px] sm:min-w-0 flex-1 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs snap-start shrink-0 sm:shrink">
+        <div class="flex items-center justify-between text-slate-500 mb-0.5">
+          <span class="text-[11px] font-medium">기집행액</span>
+          <span class="p-0.5 rounded bg-blue-50 text-blue-600"><i data-lucide="badge-check" class="w-3 h-3"></i></span>
+        </div>
+        <div class="text-base sm:text-lg font-extrabold text-blue-600 tracking-tight">
+          16,926,880<span class="text-[10px] font-normal text-slate-500 ml-0.5">원</span>
+        </div>
+        <div class="text-[10px] text-blue-600 font-semibold mt-0.5">집행률 34.2%</div>
+      </div>
+
+      <div class="min-w-[150px] sm:min-w-0 flex-1 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs snap-start shrink-0 sm:shrink">
+        <div class="flex items-center justify-between text-slate-500 mb-0.5">
+          <span class="text-[11px] font-medium">총 잔여 소요</span>
+          <span class="p-0.5 rounded bg-amber-50 text-amber-600"><i data-lucide="hourglass" class="w-3 h-3"></i></span>
+        </div>
+        <div class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+          32,525,800<span class="text-[10px] font-normal text-slate-500 ml-0.5">원</span>
+        </div>
+        <div class="text-[10px] text-amber-600 font-medium mt-0.5">사전13.7M + 4월18.8M</div>
+      </div>
+
+      <div class="min-w-[150px] sm:min-w-0 flex-1 bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs bg-gradient-to-b from-white to-emerald-50/20 snap-start shrink-0 sm:shrink">
+        <div class="flex items-center justify-between text-emerald-600 mb-0.5">
+          <span class="text-[11px] font-bold">세이프박스</span>
+          <span class="p-0.5 rounded bg-emerald-100 text-emerald-700"><i data-lucide="shield-check" class="w-3 h-3"></i></span>
+        </div>
+        <div class="text-base sm:text-lg font-extrabold text-emerald-700 tracking-tight">
+          9,379,546<span class="text-[10px] font-normal text-slate-500 ml-0.5">원</span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-0.5">즉시 가용 현금</div>
+      </div>
+
+      <div class="min-w-[150px] sm:min-w-0 flex-1 bg-white p-3 rounded-xl border border-indigo-200 shadow-2xs bg-gradient-to-b from-white to-indigo-50/20 snap-start shrink-0 sm:shrink">
+        <div class="flex items-center justify-between text-indigo-600 mb-0.5">
+          <span class="text-[11px] font-bold">순수 자체 조달</span>
+          <span class="p-0.5 rounded bg-indigo-100 text-indigo-700"><i data-lucide="coins" class="w-3 h-3"></i></span>
+        </div>
+        <div class="text-base sm:text-lg font-extrabold text-indigo-700 tracking-tight">
+          18,379,546<span class="text-[10px] font-normal text-slate-500 ml-0.5">원</span>
+        </div>
+        <div class="text-[10px] text-indigo-600 font-semibold mt-0.5">대출 0원 (세이프+적립+펀드)</div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: 4월 이전 준비 예산 (2026 ~ 2027.03 사전 완납) -->
+    <!-- ======================================================== -->
+    <div id="tab-content-1" class="space-y-4 sm:space-y-6">
+      
+      <!-- Stage 1 Strategic Banner -->
+      <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 text-[10px] sm:text-xs font-semibold border border-blue-400/30">
+              <i data-lucide="calendar-check" class="w-3 h-3"></i>
+              STEP 1 · 4월 이전 사전 완납 관리 (2026.10 ~ 2027.03)
+            </div>
+            <h2 class="text-lg sm:text-2xl font-black text-white tracking-tight">
+              3월 말까지 필요액: <span class="text-amber-300">13,725,200원</span>
+            </h2>
+            <p class="text-[11px] sm:text-sm text-slate-300 leading-relaxed">
+              본식 당일 축의금 정산이 불가한 <strong>사전 완납 품목(스튜디오, 부모님 선물 잔액, 신행 패키지 잔금 981만 원 등)</strong>입니다. 자체 조달액(1,838만 원)으로 <strong>100% 자력 완납 후 465만 원의 순현금 잉여</strong>가 4월로 이월됩니다.
+            </p>
           </div>
+
+          <!-- Quick Solvency Card -->
+          <div class="w-full md:w-auto bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/15 text-xs space-y-1 shrink-0">
+            <div class="flex justify-between text-slate-200">
+              <span>자체 조달 자금 합계</span>
+              <span class="font-bold text-emerald-300">18,379,546원</span>
+            </div>
+            <div class="flex justify-between text-slate-200">
+              <span>4월 이전 잔금 합계</span>
+              <span class="font-bold text-amber-300">-13,725,200원</span>
+            </div>
+            <div class="pt-1 border-t border-white/15 flex justify-between items-baseline">
+              <span class="font-bold text-white">3월 말 통장 잔고</span>
+              <span class="text-sm sm:text-base font-black text-emerald-400">+4,654,346원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-April Timeline Breakdown (2026 vs 2027.03) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <!-- 2026 하반기 잔여 -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-blue-200 shadow-2xs flex flex-col justify-between">
           <div>
-            <div class="font-bold text-sm text-slate-900">예산 집행률 29.9% 달성 중</div>
-            <div class="text-xs text-slate-600">예복예물(100%)과 부모님 선물 등 초기 지출이 순조롭게 완료되었으며, 잔여 예산 34,682,600원은 2026~2027년 단계별로 집행됩니다.</div>
-          </div>
-        </div>
-        <span class="hidden md:inline-flex text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-blue-200 text-blue-700 shadow-xs shrink-0">
-          D-Wedding Financial Summary
-        </span>
-      </div>
-
-      <!-- Key Metrics KPI Grid (5 Cards) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-        <!-- 1. 총 예산 -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between text-slate-500 mb-2">
-            <span class="text-xs font-medium">총 확정 예산</span>
-            <span class="p-1.5 rounded-lg bg-slate-100 text-slate-600"><i data-lucide="calculator" class="w-4 h-4"></i></span>
-          </div>
-          <div class="text-xl font-bold text-slate-900 tracking-tight">49,452,680<span class="text-xs font-normal text-slate-500 ml-1">원</span></div>
-          <div class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
-            <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400"></i>
-            총 9대 카테고리 구성
-          </div>
-        </div>
-
-        <!-- 2. 누적 지출액 -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between text-slate-500 mb-2">
-            <span class="text-xs font-medium">누적 기집행액</span>
-            <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600"><i data-lucide="check-circle-2" class="w-4 h-4"></i></span>
-          </div>
-          <div class="text-xl font-bold text-blue-600 tracking-tight">14,770,080<span class="text-xs font-normal text-slate-500 ml-1">원</span></div>
-          <div class="mt-2">
-            <div class="flex justify-between text-xs text-slate-600 font-medium mb-1">
-              <span>집행률</span>
-              <span class="text-blue-600 font-bold">29.9%</span>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                2026년 하반기 잔여
+              </span>
+              <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">즉시 결제 가능</span>
             </div>
-            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-600 rounded-full" style="width: 29.9%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 향후 잔여 예산 -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between text-slate-500 mb-2">
-            <span class="text-xs font-medium">향후 잔여 필요액</span>
-            <span class="p-1.5 rounded-lg bg-amber-50 text-amber-600"><i data-lucide="clock" class="w-4 h-4"></i></span>
-          </div>
-          <div class="text-xl font-bold text-slate-900 tracking-tight">34,682,600<span class="text-xs font-normal text-slate-500 ml-1">원</span></div>
-          <div class="text-xs text-slate-500 mt-1.5 flex items-center justify-between">
-            <span>미집행 비율</span>
-            <span class="font-semibold text-amber-600">70.1%</span>
-          </div>
-        </div>
-
-        <!-- 4. 현재 보유 자산 (세이프박스) -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between text-slate-500 mb-2">
-            <span class="text-xs font-medium">보유 자산 (세이프박스)</span>
-            <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="shield-check" class="w-4 h-4"></i></span>
-          </div>
-          <div class="text-xl font-bold text-emerald-600 tracking-tight">11,009,546<span class="text-xs font-normal text-slate-500 ml-1">원</span></div>
-          <div class="text-xs text-slate-500 mt-1.5 flex items-center justify-between">
-            <span>잔여액 대비 커버</span>
-            <span class="font-semibold text-emerald-600">31.7%</span>
-          </div>
-        </div>
-
-        <!-- 5. 1차 부족액 -->
-        <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-xs bg-gradient-to-b from-white to-rose-50/30 hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between text-rose-500 mb-2">
-            <span class="text-xs font-semibold">1차 단순 부족액</span>
-            <span class="p-1.5 rounded-lg bg-rose-100 text-rose-600"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
-          </div>
-          <div class="text-xl font-bold text-rose-600 tracking-tight">-23,673,054<span class="text-xs font-normal text-slate-500 ml-1">원</span></div>
-          <div class="text-xs text-rose-700/80 mt-1.5 font-medium flex items-center gap-1">
-            <span>탭2 운용 계획으로 상쇄 가능</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Visual Charts Grid (Doughnut & Bar) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Left: Category Budget Share Chart -->
-        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-blue-600"></i>
-              항목별 예산 비중 (총 4,945만 원)
-            </h3>
-            <span class="text-xs text-slate-400">9대 항목</span>
-          </div>
-          <p class="text-xs text-slate-500 mb-3">신혼여행(34.0%)과 식대답례(22.4%)가 전체 예산의 과반(56.4%)을 차지합니다.</p>
-          <div class="relative w-full h-56 flex items-center justify-center">
-            <canvas id="categoryChart"></canvas>
-          </div>
-          <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-            <div class="p-2 rounded-lg bg-slate-50">
-              <div class="text-slate-500">1위 신혼여행</div>
-              <div class="font-bold text-slate-800">1,680만 원</div>
-            </div>
-            <div class="p-2 rounded-lg bg-slate-50">
-              <div class="text-slate-500">2위 식대답례</div>
-              <div class="font-bold text-slate-800">1,110만 원</div>
-            </div>
-            <div class="p-2 rounded-lg bg-slate-50">
-              <div class="text-slate-500">3위 예복예물</div>
-              <div class="font-bold text-slate-800">628.7만 원</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Yearly Execution Breakdown (2026 vs 2027) -->
-        <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-            <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-              <i data-lucide="calendar-range" class="w-4 h-4 text-indigo-600"></i>
-              기간별 예산 집행 계획 (2026년 vs 2027년)
-            </h3>
-            <span class="text-xs text-slate-500">엑셀 시트 2번 기간별 집행 데이터 기준</span>
-          </div>
-          
-          <!-- Period Comparison Summary Badges -->
-          <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-indigo-950">2026년 집행 대상</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800 font-bold">16,352,080원</span>
+            <div class="text-xl sm:text-2xl font-black text-blue-900 tracking-tight">3,914,600원</div>
+            <p class="text-[11px] text-slate-500 mt-0.5">현재 세이프박스 실잔액(938만 원)으로 즉시 전액 완납 완료</p>
+            
+            <div class="mt-2.5 text-xs text-slate-600 space-y-1 pt-2.5 border-t border-slate-100">
+              <div class="flex justify-between">
+                <span>• 항공권 잔여 및 신행 예약</span>
+                <span class="font-semibold text-slate-800">2,989,400원</span>
               </div>
-              <div class="flex justify-between text-xs text-slate-600 mt-2">
-                <span>기집행: 10,280,680원</span>
-                <span class="font-bold text-indigo-700">잔여: 6,071,400원</span>
+              <div class="flex justify-between">
+                <span>• 기타 잡비 (사전 모임/답례)</span>
+                <span class="font-semibold text-slate-800">1,345,000원</span>
               </div>
-              <div class="w-full h-1.5 bg-indigo-200/60 rounded-full mt-1.5 overflow-hidden">
-                <div class="h-full bg-indigo-600" style="width: 62.9%"></div>
+              <div class="flex justify-between">
+                <span>• 장인어른 선물 (정장 잔액)</span>
+                <span class="font-semibold text-slate-800">682,000원</span>
               </div>
-            </div>
-
-            <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-3">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-blue-950">2027년 집행 대상 (본식)</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-200 text-blue-800 font-bold">33,100,600원</span>
-              </div>
-              <div class="flex justify-between text-xs text-slate-600 mt-2">
-                <span>기집행: 4,489,400원</span>
-                <span class="font-bold text-blue-700">잔여: 28,611,200원</span>
-              </div>
-              <div class="w-full h-1.5 bg-blue-200/60 rounded-full mt-1.5 overflow-hidden">
-                <div class="h-full bg-blue-600" style="width: 13.6%"></div>
+              <div class="flex justify-between text-rose-600">
+                <span>• 스드메 (기결제 초과 상쇄분)</span>
+                <span class="font-semibold">-1,101,800원</span>
               </div>
             </div>
           </div>
-
-          <!-- Bar Chart Container -->
-          <div class="relative w-full h-48">
-            <canvas id="periodComparisonChart"></canvas>
+          <div class="mt-3 pt-2 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 flex justify-between">
+            <span>2026년 완납 후 잔여고</span>
+            <span class="font-bold text-slate-800">약 546만 원 유지</span>
           </div>
         </div>
 
-      </div>
-
-      <!-- Interactive Accordion Section for Detail Items -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+        <!-- 2027.01 ~ 2027.03 잔여 -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-indigo-200 shadow-2xs flex flex-col justify-between">
           <div>
-            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-              <i data-lucide="list-tree" class="w-5 h-5 text-blue-600"></i>
-              항목별 상세 예산 및 잔액 내역
-            </h3>
-            <p class="text-xs text-slate-500 mt-0.5">각 항목 카드를 클릭하면 세부 지출 항목과 기간별 잔여 계획을 확인할 수 있습니다.</p>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                2027년 1~3월 신행 잔금
+              </span>
+              <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">출발 30일 전 완납</span>
+            </div>
+            <div class="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">9,810,600원</div>
+            <p class="text-[11px] text-slate-500 mt-0.5">파리&이탈리아 패키지 투어 잔금 (27.3.10 이전 완납)</p>
+            
+            <div class="mt-2.5 text-xs text-slate-600 space-y-1 pt-2.5 border-t border-slate-100">
+              <div class="flex justify-between">
+                <span>• 파리&이탈리아 패키지 잔금</span>
+                <span class="font-extrabold text-indigo-900">9,810,600원</span>
+              </div>
+              <div class="flex justify-between">
+                <span>• 모바일 청첩장 제작 (2027.02)</span>
+                <span class="font-semibold text-slate-800">80,000원</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>• 스냅/DVD/본식 잔금</span>
+                <span class="font-normal">4월 본식 당일 이관</span>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-2 self-stretch sm:self-auto">
-            <button onclick="toggleAllAccordions(true)" class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs transition-colors">
+          <div class="mt-3 pt-2 border-t border-slate-100 text-[10px] sm:text-[11px] text-indigo-700 flex justify-between font-semibold">
+            <span>충당: 6개월 적립(6M) + 펀드해지(3M)</span>
+            <span>전액 커버</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-April Detail Accordions -->
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div class="p-3.5 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/70">
+          <div>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-base flex items-center gap-1.5">
+              <i data-lucide="list-checks" class="w-4 h-4 text-blue-600"></i>
+              4월 이전 준비 품목 상세 내역
+            </h3>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleGroupAccordions('pre', true)" class="text-[11px] font-semibold px-2 sm:px-3 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs">
               전체 펼치기
             </button>
-            <button onclick="toggleAllAccordions(false)" class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs transition-colors">
+            <button onclick="toggleGroupAccordions('pre', false)" class="text-[11px] font-semibold px-2 sm:px-3 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs">
               전체 접기
             </button>
           </div>
         </div>
 
-        <!-- Accordion Items List -->
-        <div id="accordion-container" class="divide-y divide-slate-200">
-          
-          <!-- 1. 신혼여행 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-honeymoon')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="plane" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">신혼여행</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-sky-50 text-sky-700 border border-sky-200">집행률 20.8%</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">최대 단일 지출 항목 · 항공권/숙소 선결제 및 현지 경비 잔여</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">16,800,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-blue-600">3,489,400원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">13,310,600원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-honeymoon" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-honeymoon" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4 space-y-3">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div class="p-3 bg-white rounded-xl border border-slate-200">
-                    <div class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-blue-500"></span> 2026년 집행분
-                    </div>
-                    <div class="flex justify-between text-xs text-slate-600 py-1 border-b border-slate-100">
-                      <span>항공권 예약금 및 선결제</span>
-                      <span class="font-medium text-slate-900">예산 2,989,400원 (잔액 2,989,400원)</span>
-                    </div>
-                    <p class="text-[11px] text-slate-500 mt-2">26년도 티켓팅 확정 시점 결제 예정 금액입니다.</p>
-                  </div>
-                  <div class="p-3 bg-white rounded-xl border border-slate-200">
-                    <div class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 2027년 집행분 (출국 직전)
-                    </div>
-                    <div class="flex justify-between text-xs text-slate-600 py-1 border-b border-slate-100">
-                      <span>숙소 잔금, 투어, 현지 쇼핑·식비</span>
-                      <span class="font-medium text-slate-900">예산 13,810,600원 (잔액 10,321,200원)</span>
-                    </div>
-                    <p class="text-[11px] text-slate-500 mt-2">현지 환전 및 숙소 파이널 체크아웃 결제 대상입니다.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. 식대답례 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-meal')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="utensils" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">식대답례</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-200">집행률 0.0% (본식 당일)</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">2027년 본식 당일 축의금 직접 정산 주력 항목</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">11,100,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-slate-400">0원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-amber-600">11,100,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-meal" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-meal" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4 space-y-2">
-                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                  <div class="flex justify-between items-center text-xs pb-2 border-b border-slate-100">
-                    <span class="font-bold text-slate-800">예식 당일 보증인원 식대 정산 및 답례품</span>
-                    <span class="font-bold text-slate-900">2027년 전액 집행 (11,100,000원)</span>
-                  </div>
-                  <div class="mt-2 text-xs text-slate-600 leading-relaxed bg-amber-50/60 p-2.5 rounded-lg border border-amber-100">
-                    💡 <strong>자금 관리 팁:</strong> 식대는 사전 현금 인출이 필수가 아니며, 본식 종료 직후 당일 접수된 하객 축의금으로 현장 정산(현금/카드)하는 구조이므로 사전 자금 압박이 상대적으로 덜합니다.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. 예복예물 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-ring')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="sparkle" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">예복예물</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">집행 완료 100.0%</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">맞춤 정장, 웨딩 밴드, 예물 시계 전액 완납 완료</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">6,287,680원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-emerald-600">6,287,680원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-400">0원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-ring" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-ring" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
-                  <div class="flex items-center justify-between text-emerald-700 font-bold mb-1">
-                    <span>지출 완료 (추가 발생 비용 없음)</span>
-                    <span>잔여 예산 0원</span>
-                  </div>
-                  <p class="text-slate-600">신랑 신부 웨딩 밴드 및 맞춤 수트/코트 등 구매 완료되어 향후 예산 변동 리스크가 소멸되었습니다.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4. 부모님 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-parents')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="heart-handshake" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">부모님</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-700 border border-purple-200">집행률 84.8%</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">양가 인사 선물 및 예단/감사비 지출</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">4,475,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-purple-600">3,793,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">682,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-parents" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-parents" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
-                  <div class="flex justify-between items-center text-slate-700 mb-1">
-                    <span class="font-semibold">2026년 잔여 예산 (감사 선물/의전)</span>
-                    <span class="font-bold text-purple-700">682,000원</span>
-                  </div>
-                  <p class="text-slate-500">2026년 내 소액 잔여 집행으로 조기 종결될 예정입니다.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. 예식홀 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-hall')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="landmark" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">예식홀</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">집행률 23.9%</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">홀 대관료 및 연출료 (계약금 완료, 본식 잔금)</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">4,190,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-indigo-600">1,000,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">3,190,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-hall" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-hall" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
-                  <div class="flex justify-between items-center text-slate-700 mb-1">
-                    <span class="font-semibold">홀 대관 계약금 (기납입)</span>
-                    <span class="font-bold text-emerald-600">1,000,000원</span>
-                  </div>
-                  <div class="flex justify-between items-center text-slate-700 border-t border-slate-100 pt-1 mt-1">
-                    <span class="font-semibold">2027년 본식 홀 잔금 및 꽃장식 연출비</span>
-                    <span class="font-bold text-indigo-700">3,190,000원</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 6. 스드메 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-sdm')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="camera" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">스드메 (스튜디오/드레스/메이크업)</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-pink-50 text-pink-700 border border-pink-200">미집행 (잔여 100%)</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">촬영 패키지 및 본식 드레스·메이크업 잔금</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">2,800,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-slate-400">0원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">2,800,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-sdm" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-sdm" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1.5">
-                  <div class="flex justify-between items-center text-slate-700">
-                    <span>2026년 집행분 (스튜디오 촬영 계약금/헬퍼비 등)</span>
-                    <span class="font-bold text-slate-900">600,000원</span>
-                  </div>
-                  <div class="flex justify-between items-center text-slate-700 border-t border-slate-100 pt-1">
-                    <span>2027년 집행분 (본식 드레스 가봉 및 메이크업 최종 잔금)</span>
-                    <span class="font-bold text-pink-700">2,200,000원</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 7. 당일기타 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-dayetc')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="gift" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">당일기타</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200">집행률 7.8%</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">헬퍼 이모비, 사회자·축가 사례비, 부케, 청첩장 등</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">2,580,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-teal-600">200,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">2,380,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-dayetc" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-dayetc" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1.5">
-                  <div class="flex justify-between items-center text-slate-700">
-                    <span>2026년 집행 잔여 (청첩장 인쇄, 부케 및 사전 소품)</span>
-                    <span class="font-bold text-slate-900">1,800,000원</span>
-                  </div>
-                  <div class="flex justify-between items-center text-slate-700 border-t border-slate-100 pt-1">
-                    <span>2027년 본식 현장 봉투 (사회자, 주례/축가, 헬퍼비 등 현금)</span>
-                    <span class="font-bold text-teal-700">580,000원</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 8. 스냅영상 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-snap')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="video" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">스냅영상</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">미집행 (잔여 100%)</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">본식 DVD 영상 및 서브 스냅 잔금</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">750,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-slate-400">0원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">750,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-snap" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-snap" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
-                  <div class="flex justify-between items-center text-slate-700">
-                    <span>2027년 본식 완료 후 정산 잔금</span>
-                    <span class="font-bold text-cyan-700">750,000원</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 9. 혼주가족 -->
-          <div class="accordion-item transition-colors hover:bg-slate-50/40">
-            <button onclick="toggleAccordion('item-family')" class="w-full px-5 py-4 flex flex-col md:flex-row md:items-center justify-between text-left gap-3 focus:outline-none">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <i data-lucide="users" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">혼주가족</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-700 border border-orange-200">미집행 (잔여 100%)</span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">양가 혼주 한복 대여 및 메이크업/헤어 잔여비용</div>
-                </div>
-              </div>
-              <div class="flex items-center justify-between md:justify-end gap-5">
-                <div class="grid grid-cols-3 gap-3 md:gap-6 text-right">
-                  <div>
-                    <div class="text-[10px] text-slate-400">총 예산</div>
-                    <div class="text-xs font-semibold text-slate-700">470,000원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">기집행액</div>
-                    <div class="text-xs font-semibold text-slate-400">0원</div>
-                  </div>
-                  <div>
-                    <div class="text-[10px] text-slate-400">잔여액</div>
-                    <div class="text-xs font-bold text-slate-900">470,000원</div>
-                  </div>
-                </div>
-                <i data-lucide="chevron-down" id="chevron-item-family" class="rotate-chevron w-5 h-5 text-slate-400 shrink-0"></i>
-              </div>
-            </button>
-            <div id="content-item-family" class="accordion-content bg-slate-50/80 px-5 border-t border-slate-100">
-              <div class="py-4">
-                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
-                  <div class="flex justify-between items-center text-slate-700">
-                    <span>2027년 본식 당일 정산 (혼주 한복 반납 시 정산)</span>
-                    <span class="font-bold text-orange-700">470,000원</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div id="accordionPreApril" class="divide-y divide-slate-200">
+          <!-- Dynamically populated via JS -->
         </div>
       </div>
 
     </div>
 
-    <!-- ========================================== -->
-    <!-- TAB 2: 자금 운용 및 조달 계획 -->
-    <!-- ========================================== -->
-    <div id="tab-content-2" class="space-y-6 hidden">
+    <!-- ======================================================== -->
+    <!-- TAB 2: 4월 본식 및 신혼여행 예산 (2027.04 D-Day & 출발) -->
+    <!-- ======================================================== -->
+    <div id="tab-content-2" class="space-y-4 sm:space-y-6 hidden">
       
-      <!-- Top Strategic Summary Card -->
-      <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        
-        <div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div class="space-y-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-400/30">
-              <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
-              자금 운용 정밀 시뮬레이션
+      <!-- Stage 2 Strategic Banner -->
+      <div class="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] sm:text-xs font-semibold border border-emerald-400/30">
+              <i data-lucide="party-popper" class="w-3 h-3"></i>
+              STEP 2 · 4월 본식 D-Day & 신혼여행 출발 (2027.04)
             </div>
-            <h2 class="text-2xl font-extrabold tracking-tight text-white">
-              총 조달 가용 자산: <span class="text-blue-400">24,509,546원</span>
+            <h2 class="text-lg sm:text-2xl font-black text-white tracking-tight">
+              4월 본식·신행 소요액: <span class="text-amber-300">18,800,600원</span>
             </h2>
-            <p class="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              보유 세이프박스(1,100만)와 6개월 정기 적립(600만), 펀드 해지(300만), 연금대출(450만)을 결합하여
-              총 <span class="text-white font-bold underline decoration-blue-400 underline-offset-4">2,451만 원</span>의 유동성을 확보합니다.
+            <p class="text-[11px] sm:text-sm text-slate-300 leading-relaxed">
+              본식 당일 식대(960만)와 답례품(150만)은 <strong>접수대 하객 축의금으로 현장 즉시 상계 정산</strong>합니다. 식대 상계 후 순수 현금 필요액은 약 <strong>770만 원</strong>이며, 3월 이월 자금(465만)과 당일 축의금 순유입으로 마감됩니다.
             </p>
           </div>
 
-          <!-- Gap Status Box -->
-          <div class="w-full lg:w-auto bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/15 flex flex-col gap-1 min-w-[280px]">
-            <div class="flex justify-between items-center text-xs text-slate-300">
-              <span>향후 총 필요액</span>
-              <span class="font-medium text-slate-100">34,682,600원</span>
+          <!-- Quick Net Balance Card -->
+          <div class="w-full md:w-auto bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/15 text-xs space-y-1 shrink-0">
+            <div class="flex justify-between text-slate-200">
+              <span>4월 본식·신행 소요액</span>
+              <span class="font-bold text-white">18,800,600원</span>
             </div>
-            <div class="flex justify-between items-center text-xs text-slate-300">
-              <span>총 조달 계획액</span>
-              <span class="font-medium text-blue-300">24,509,546원</span>
+            <div class="flex justify-between text-slate-200">
+              <span>(-) 식대 축의금 상계</span>
+              <span class="font-bold text-emerald-300">-9,600,000원</span>
             </div>
-            <div class="pt-2 mt-1 border-t border-white/10 flex justify-between items-baseline">
-              <span class="text-xs font-bold text-amber-300">표면상 부족액</span>
-              <span class="text-lg font-extrabold text-amber-400">-10,173,054원</span>
+            <div class="flex justify-between text-slate-200">
+              <span>(-) 3월 말 현금 이월분</span>
+              <span class="font-bold text-blue-300">-4,654,346원</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Highlight callout: Wedding Reception Banquet Offsetting -->
-        <div class="mt-6 pt-4 border-t border-white/15 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div class="flex items-start gap-2.5 bg-emerald-500/10 border border-emerald-400/20 rounded-xl p-3 text-emerald-200">
-            <i data-lucide="check-check" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-            <div>
-              <span class="font-bold text-white block">식대 1,110만 원은 본식 '하객 축의금'으로 자동 상쇄</span>
-              표면상 부족분(-1,017만 원)은 본식 당일 집행되는 식대답례(1,110만 원)보다 적습니다. 식대를 축의금으로 현장 정산 시 <strong class="text-emerald-300 underline">실질 가용 자금은 약 92.7만 원의 잉여(Surplus) 상태</strong>가 되어 자금 리스크가 0에 수렴합니다.
-            </div>
-          </div>
-
-          <div class="flex items-start gap-2.5 bg-blue-500/10 border border-blue-400/20 rounded-xl p-3 text-blue-200">
-            <i data-lucide="calendar-clock" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
-            <div>
-              <span class="font-bold text-white block">2026년 하반기 필요자금(607.1만 원) 즉시 커버</span>
-              현재 세이프박스 잔액(1,100만 원)만으로도 2026년에 소요되는 잔여액 6,071,400원을 100% 결제하고도 약 493만 원이 세이프박스에 유지됩니다.
+            <div class="pt-1 border-t border-white/15 flex justify-between items-baseline">
+              <span class="font-bold text-white">본식 당일 최종 차액</span>
+              <span class="text-sm sm:text-base font-black text-amber-300">▲ 4,546,254원</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 4 Core Financing Sources Grid -->
-      <div>
-        <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <i data-lucide="coins" class="w-4 h-4 text-blue-600"></i>
-          자금 조달원 4대 구성 내역 (총 24,509,546원)
+      <!-- 4월 본식 품목 2분할 카드 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <!-- 식대답례 그룹 (축의금 자동 정산 영역) -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-emerald-200 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                ① 축의금 현장 상계 (식대·답례품)
+              </span>
+              <span class="text-xs font-bold text-emerald-600">총 1,110만 원</span>
+            </div>
+            <div class="text-xl sm:text-2xl font-black text-emerald-900 tracking-tight">11,100,000원</div>
+            <p class="text-[11px] text-slate-500 mt-0.5">접수대 축의금 가방에서 식장 매니저와 직접 현장 상계</p>
+            
+            <div class="mt-2.5 text-xs text-slate-600 space-y-1 pt-2.5 border-t border-slate-100">
+              <div class="flex justify-between">
+                <span>• 하객 식대 (150명 보증인원 기준)</span>
+                <span class="font-extrabold text-slate-900">9,600,000원</span>
+              </div>
+              <div class="flex justify-between">
+                <span>• 고급 답례품 (호두정과 300세트)</span>
+                <span class="font-semibold text-slate-800">1,500,000원</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+            <span>통장 현금 인출 없이 축의금 수입으로 현장 결제 종결</span>
+          </div>
+        </div>
+
+        <!-- 당일 현금 결제 그룹 -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-amber-200 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                ② 당일 결제 및 체류비 잔금 영역
+              </span>
+              <span class="text-xs font-bold text-amber-700">총 770만 원</span>
+            </div>
+            <div class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">7,700,600원</div>
+            <p class="text-[11px] text-slate-500 mt-0.5">본식 직후 정산 및 유럽 현지 출국 시 환전 외화</p>
+            
+            <div class="mt-2.5 text-xs text-slate-600 space-y-1 pt-2.5 border-t border-slate-100">
+              <div class="flex justify-between">
+                <span>• 신혼여행 현지 체류비 (12박 환전)</span>
+                <span class="font-extrabold text-indigo-900">3,500,000원</span>
+              </div>
+              <div class="flex justify-between">
+                <span>• 웨딩홀 대관료 잔금 및 연출비</span>
+                <span class="font-semibold text-slate-800">3,190,000원</span>
+              </div>
+              <div class="flex justify-between">
+                <span>• 스드메 본식 드레스·메이크업 잔금</span>
+                <span class="font-semibold text-slate-800">2,200,000원</span>
+              </div>
+              <div class="flex justify-between">
+                <span>• 스냅/DVD/혼주헤메/도우미/축가</span>
+                <span class="font-semibold text-slate-800">1,810,000원</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+            <span>3월 말 이월액(465만) + 개인 축의금으로 여유 있게 정산</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4월 본식·신행 Detail Accordions -->
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div class="p-3.5 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/70">
+          <div>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-base flex items-center gap-1.5">
+              <i data-lucide="church" class="w-4 h-4 text-emerald-600"></i>
+              4월 본식 & 신혼여행 품목 상세 내역
+            </h3>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleGroupAccordions('post', true)" class="text-[11px] font-semibold px-2 sm:px-3 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs">
+              전체 펼치기
+            </button>
+            <button onclick="toggleGroupAccordions('post', false)" class="text-[11px] font-semibold px-2 sm:px-3 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs">
+              전체 접기
+            </button>
+          </div>
+        </div>
+
+        <div id="accordionPostApril" class="divide-y divide-slate-200">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: 자금 운용 종합 계획 (무대출 플랜 & 실시간 시뮬레이터) -->
+    <!-- ======================================================== -->
+    <div id="tab-content-3" class="space-y-4 sm:space-y-6 hidden">
+      
+      <!-- Top Strategic Banner -->
+      <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-md relative overflow-hidden">
+        <div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-6">
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] sm:text-xs font-semibold border border-emerald-400/30">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              대출 0원 · 순수 현금 자금 운용 전략 (No-Debt Plan)
+            </div>
+            <h2 class="text-xl sm:text-3xl font-black tracking-tight text-white">
+              자체 가용 자금: <span class="text-emerald-400">18,379,546원</span>
+            </h2>
+            <p class="text-[11px] sm:text-sm text-slate-300 leading-relaxed">
+              연금보험 대출(450만) 제외, <strong>세이프박스 실잔액(9.38M) + 6개월 정기예치(6.0M) + 펀드해지(3.0M)</strong>로 1,838만 원을 순수 조달합니다.
+            </p>
+          </div>
+
+          <div class="w-full lg:w-auto bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/15 flex flex-col gap-1 min-w-[260px] text-xs shrink-0">
+            <div class="flex justify-between items-center text-slate-300">
+              <span>총 필요 잔여금 (A)</span>
+              <span class="font-medium text-slate-100">32,525,800원</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span>자체 순수 자금 (B)</span>
+              <span class="font-medium text-emerald-300">18,379,546원</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span>식대 축의금 상계 (C)</span>
+              <span class="font-medium text-amber-300">+9,600,000원</span>
+            </div>
+            <div class="pt-1.5 mt-0.5 border-t border-white/15 flex justify-between items-baseline">
+              <span class="font-bold text-slate-200">기본 시나리오 차액</span>
+              <span id="tab3HeaderNetBalance" class="text-base font-black text-amber-400">-4,546,254원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3대 순수 자금 파이프라인 카드 -->
+      <div class="space-y-2">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-600"></i>
+          자체 순수 자금 조달 3대 파이프라인
         </h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <!-- Source 1: Safebox Balance -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+          <!-- 1. Safebox -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center sm:block">
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                  ① 기확보 완료
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                  ① 실보유 자산
                 </span>
-                <i data-lucide="safe" class="w-4 h-4 text-emerald-600"></i>
               </div>
-              <h4 class="font-bold text-slate-900 text-sm">세이프박스 현재 잔액</h4>
-              <p class="text-xs text-slate-500 mt-1">카카오뱅크/토스 세이프박스에 즉시 인출 가능한 안전 자산</p>
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm">세이프박스 실잔액</h4>
+              <div class="text-[10px] text-slate-400">즉시 가용 현금</div>
             </div>
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <div class="text-xs text-slate-400">확보 자금</div>
-              <div class="text-lg font-black text-emerald-600">11,009,546원</div>
-              <div class="text-[11px] text-slate-500 mt-1">조달 비중: <strong>44.9%</strong></div>
+            <div class="text-right sm:text-left sm:mt-2 sm:pt-2 sm:border-t sm:border-slate-100">
+              <div class="text-base sm:text-lg font-black text-emerald-600">9,379,546원</div>
+              <div class="text-[10px] text-slate-500">조달액의 <strong>51.0%</strong></div>
             </div>
           </div>
 
-          <!-- Source 2: Monthly Deposit Plan -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <!-- 2. Monthly Savings -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center sm:block">
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                  ② 6개월 정기 적립
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+                  ② 6개월 정기예치
                 </span>
-                <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
               </div>
-              <h4 class="font-bold text-slate-900 text-sm">월간 정기 예치 계획</h4>
-              <p class="text-xs text-slate-500 mt-1">월 1,000,000원 × 6개월 (26년 10월 ~ 27년 3월)</p>
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm">월간 정기 예치 적립</h4>
+              <div class="text-[10px] text-slate-400">월 100만 × 6개월</div>
             </div>
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <div class="text-xs text-slate-400">목표 누적액</div>
-              <div class="text-lg font-black text-blue-600">6,000,000원</div>
-              <div class="text-[11px] text-slate-500 mt-1">조달 비중: <strong>24.5%</strong></div>
+            <div class="text-right sm:text-left sm:mt-2 sm:pt-2 sm:border-t sm:border-slate-100">
+              <div class="text-base sm:text-lg font-black text-blue-600">6,000,000원</div>
+              <div class="text-[10px] text-slate-500">조달액의 <strong>32.6%</strong></div>
             </div>
           </div>
 
-          <!-- Source 3: Fund Termination -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <!-- 3. Fund Liquidation -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center sm:block">
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200">
                   ③ 펀드 환매 해지
                 </span>
-                <i data-lucide="trending-up" class="w-4 h-4 text-indigo-600"></i>
               </div>
-              <h4 class="font-bold text-slate-900 text-sm">보유 Fund 해지 환급금</h4>
-              <p class="text-xs text-slate-500 mt-1">투자 펀드 환매를 통한 약 3백만 원 현금화</p>
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm">개인 펀드(Fund) 환매</h4>
+              <div class="text-[10px] text-slate-400">2027년 1~2월 중 현금화</div>
             </div>
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <div class="text-xs text-slate-400">예상 유입액</div>
-              <div class="text-lg font-black text-indigo-600">3,000,000원</div>
-              <div class="text-[11px] text-slate-500 mt-1">조달 비중: <strong>12.2%</strong></div>
+            <div class="text-right sm:text-left sm:mt-2 sm:pt-2 sm:border-t sm:border-slate-100">
+              <div class="text-base sm:text-lg font-black text-indigo-600">3,000,000원</div>
+              <div class="text-[10px] text-slate-500">조달액의 <strong>16.3%</strong></div>
             </div>
           </div>
-
-          <!-- Source 4: Pension Insurance Loan -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                  ④ 보험계약 대출
-                </span>
-                <i data-lucide="landmark" class="w-4 h-4 text-amber-600"></i>
-              </div>
-              <h4 class="font-bold text-slate-900 text-sm">연금보험 약관 대출</h4>
-              <p class="text-xs text-slate-500 mt-1">신용도 영향 없는 해약환급금 범위 내 대출</p>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <div class="text-xs text-slate-400">예상 대출액</div>
-              <div class="text-lg font-black text-amber-600">4,500,000원</div>
-              <div class="text-[11px] text-slate-500 mt-1">조달 비중: <strong>18.4%</strong></div>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      <!-- Monthly 6-Month Deposit Timeline & Financing Balance Chart -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Left 7 cols: 6-Month Monthly Timeline Checksheet -->
-        <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <i data-lucide="calendar-check" class="w-4 h-4 text-blue-600"></i>
-                6개월 월간 정기 예치 로드맵 (월 100만 원)
-              </h3>
-              <p class="text-xs text-slate-500">2026년 10월부터 2027년 3월까지 매월 100만 원씩 자동 이체</p>
+      <!-- Realtime Interactive Cashflow Simulator -->
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <h3 class="font-bold text-xs sm:text-base text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
+            실시간 현금흐름 밸런스 시뮬레이터
+          </h3>
+          <button onclick="resetSimulator()" class="text-[11px] text-slate-500 hover:text-slate-800 underline flex items-center gap-1">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> 초기화
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label class="text-[11px] sm:text-xs font-bold text-slate-700">월 정기 예치금 (6개월)</label>
+              <span id="simDepositVal" class="text-xs font-extrabold text-blue-600">월 100만 원 (총 600만)</span>
             </div>
-            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
-              누적 600만 원
-            </span>
+            <input type="range" id="simDepositRange" min="50" max="250" step="10" value="100" oninput="updateSimulation()" class="w-full accent-blue-600 cursor-pointer h-2 bg-slate-200 rounded-lg">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>월 50만</span>
+              <span>월 100만 (기본)</span>
+              <span>월 250만</span>
+            </div>
           </div>
 
-          <div class="space-y-2 mt-4">
-            <!-- M1 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 bg-blue-50/40">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2026년 10월 (첫째 달)</div>
-                  <div class="text-[11px] text-slate-500">정기 예치 시작 · 현 시점 납입</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-slate-900">+1,000,000원</div>
-                <div class="text-[10px] text-blue-600">누적: 1,000,000원</div>
-              </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label class="text-[11px] sm:text-xs font-bold text-slate-700">축의금 현장 충당액 (식대 상계)</label>
+              <span id="simGiftVal" class="text-xs font-extrabold text-emerald-600">960만 원 (150명)</span>
             </div>
-
-            <!-- M2 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center">2</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2026년 11월</div>
-                  <div class="text-[11px] text-slate-500">청첩장 모임 및 26년 집행 잔여 방어</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-slate-900">+1,000,000원</div>
-                <div class="text-[10px] text-slate-500">누적: 2,000,000원</div>
-              </div>
-            </div>
-
-            <!-- M3 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center">3</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2026년 12월</div>
-                  <div class="text-[11px] text-slate-500">연말 정산 전 펀드 해지(300만) 병행 추천 시기</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-slate-900">+1,000,000원</div>
-                <div class="text-[10px] text-slate-500">누적: 3,000,000원</div>
-              </div>
-            </div>
-
-            <!-- M4 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center">4</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2027년 01월</div>
-                  <div class="text-[11px] text-slate-500">신년 본식 준비 본격 돌입 (드레스 가봉)</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-slate-900">+1,000,000원</div>
-                <div class="text-[10px] text-slate-500">누적: 4,000,000원</div>
-              </div>
-            </div>
-
-            <!-- M5 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center">5</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2027년 02월</div>
-                  <div class="text-[11px] text-slate-500">연금보험 대출(450만) 실행 검토 시점</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-slate-900">+1,000,000원</div>
-                <div class="text-[10px] text-slate-500">누적: 5,000,000원</div>
-              </div>
-            </div>
-
-            <!-- M6 -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">6</span>
-                <div>
-                  <div class="text-xs font-bold text-slate-800">2027년 03월 (최종 완료)</div>
-                  <div class="text-[11px] text-slate-500">신혼여행 최종 잔금 결제 및 본식 직전 잔고 마감</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-bold text-emerald-700">+1,000,000원</div>
-                <div class="text-[10px] text-emerald-600 font-bold">최종 완료: 6,000,000원</div>
-              </div>
+            <input type="range" id="simGiftRange" min="500" max="1800" step="30" value="960" oninput="updateSimulation()" class="w-full accent-emerald-600 cursor-pointer h-2 bg-slate-200 rounded-lg">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>500만 원</span>
+              <span>960만 (식대)</span>
+              <span>1,800만 (여유)</span>
             </div>
           </div>
         </div>
 
-        <!-- Right 5 cols: Asset Share Doughnut Chart -->
-        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2 mb-1">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-600"></i>
-              자금 조달 포트폴리오 비중
-            </h3>
-            <p class="text-xs text-slate-500">총 2,450.9만 원 가용 자금의 세부 비율</p>
+        <div id="simResultBox" class="p-3.5 rounded-xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-3 bg-amber-50 border-amber-200">
+          <div class="text-center sm:text-left space-y-0.5">
+            <div class="text-[11px] font-bold text-slate-700">자금 조달 판정</div>
+            <div class="text-xs text-slate-600" id="simResultText">
+              잔여 예산 3,252만 원 정산 결과입니다.
+            </div>
           </div>
-
-          <div class="relative w-full h-52 flex items-center justify-center my-2">
-            <canvas id="fundingChart"></canvas>
-          </div>
-
-          <div class="pt-3 border-t border-slate-100 text-xs space-y-1.5 text-slate-600">
-            <div class="flex justify-between items-center">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 세이프박스</span>
-              <span class="font-bold text-slate-800">1,100.9만 원 (44.9%)</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> 6개월 예치</span>
-              <span class="font-bold text-slate-800">600.0만 원 (24.5%)</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 연금보험 대출</span>
-              <span class="font-bold text-slate-800">450.0만 원 (18.4%)</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 펀드 해지</span>
-              <span class="font-bold text-slate-800">300.0만 원 (12.2%)</span>
+          <div class="text-center sm:text-right shrink-0">
+            <div class="text-[10px] text-slate-500">예상 순 과부족액</div>
+            <div class="text-xl sm:text-2xl font-black text-amber-700" id="simNetDiffText">
+              -4,546,254원
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Net Balance Sheet Summary Table -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-5">
-        <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+      <!-- Comprehensive Balance Sheet Table (Mobile Card / Desktop Table) -->
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-5">
+        <h3 class="font-bold text-xs sm:text-sm text-slate-900 mb-2.5 flex items-center gap-1.5">
           <i data-lucide="scale" class="w-4 h-4 text-indigo-600"></i>
           최종 자금 수지 종합 밸런스 시트
         </h3>
 
-        <div class="overflow-x-auto">
+        <!-- Desktop View: Table -->
+        <div class="hidden sm:block overflow-x-auto">
           <table class="w-full text-xs text-left">
             <thead>
               <tr class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                <th class="p-3">구분</th>
-                <th class="p-3 text-right">소요 및 조달액</th>
-                <th class="p-3">설명 및 반영 조건</th>
-                <th class="p-3 text-center">자금 충당 판정</th>
+                <th class="p-2.5">항목 구분</th>
+                <th class="p-2.5 text-right">금액 (원)</th>
+                <th class="p-2.5">상세 내용 및 자금 흐름 비고</th>
+                <th class="p-2.5 text-center">상태</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr>
-                <td class="p-3 font-bold text-slate-800">향후 필요 잔여 예산 (A)</td>
-                <td class="p-3 text-right font-bold text-slate-900">34,682,600원</td>
-                <td class="p-3 text-slate-500">2026년 잔여(607.1만) + 2027년 잔여(2,861.1만)</td>
-                <td class="p-3 text-center"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">지출 대상</span></td>
+                <td class="p-2.5 font-bold text-slate-900">① 향후 필요 총 잔여 예산</td>
+                <td class="p-2.5 text-right font-extrabold text-slate-900">32,525,800</td>
+                <td class="p-2.5 text-slate-500">4월 이전 준비(1,372만) + 4월 본식·신행(1,880만) 전액</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[10px]">지출 대상</span></td>
               </tr>
               <tr>
-                <td class="p-3 font-bold text-blue-700">총 가용 조달 자산 (B)</td>
-                <td class="p-3 text-right font-bold text-blue-600">24,509,546원</td>
-                <td class="p-3 text-slate-500">세이프박스 + 정기예치(6M) + 펀드해지 + 연금대출</td>
-                <td class="p-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-semibold">확보 계획</span></td>
+                <td class="p-2.5 font-medium text-slate-700 pl-5">↳ 세이프박스 실잔액</td>
+                <td class="p-2.5 text-right font-semibold text-emerald-600">9,379,546</td>
+                <td class="p-2.5 text-slate-500">현재 통장 잔고 기준 즉시 집행 가능</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold text-[10px]">보유 완료</span></td>
               </tr>
-              <tr class="bg-amber-50/40">
-                <td class="p-3 font-bold text-amber-900">1차 산술 과부족 (B - A)</td>
-                <td class="p-3 text-right font-bold text-rose-600">-10,173,054원</td>
-                <td class="p-3 text-slate-600">단순 자금 조달 기준 시 차액 결손분</td>
-                <td class="p-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">10.1M 부족</span></td>
+              <tr>
+                <td class="p-2.5 font-medium text-slate-700 pl-5">↳ 6개월 정기 예치금 (월 100만)</td>
+                <td class="p-2.5 text-right font-semibold text-blue-600">6,000,000</td>
+                <td class="p-2.5 text-slate-500">2026.10 ~ 2027.03 매달 100만 원 적립</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold text-[10px]">정기 유입</span></td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-medium text-slate-700 pl-5">↳ 개인 펀드(Fund) 해지</td>
+                <td class="p-2.5 text-right font-semibold text-indigo-600">3,000,000</td>
+                <td class="p-2.5 text-slate-500">2027년 1~2월 신행 잔금 납부 시기 환매</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold text-[10px]">환매 예정</span></td>
+              </tr>
+              <tr class="bg-indigo-50/40">
+                <td class="p-2.5 font-bold text-indigo-900">② 자체 조달 순수 자금 합계</td>
+                <td class="p-2.5 text-right font-extrabold text-indigo-600">18,379,546</td>
+                <td class="p-2.5 text-slate-600">세이프박스 + 정기예치 + 펀드해지 (대출 0원)</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px]">순수 자산</span></td>
               </tr>
               <tr class="bg-emerald-50/40">
-                <td class="p-3 font-bold text-emerald-900">식대 축의금 현장 정산 (C)</td>
-                <td class="p-3 text-right font-bold text-emerald-600">+11,100,000원</td>
-                <td class="p-3 text-slate-600">본식 당일 하객 축의금으로 식대 대금 직접 대체</td>
-                <td class="p-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-bold">현장 상쇄</span></td>
+                <td class="p-2.5 font-bold text-emerald-900">③ 본식 식대 축의금 현장 상계</td>
+                <td class="p-2.5 text-right font-extrabold text-emerald-600">+9,600,000</td>
+                <td class="p-2.5 text-emerald-800 font-medium">150명 보증인원 식대(960만) 축의금 상계</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px]">현장 상쇄</span></td>
               </tr>
-              <tr class="bg-blue-50/60 font-bold border-t-2 border-blue-500">
-                <td class="p-3 text-blue-950 text-sm">최종 실질 자금 수지 (B - A + C)</td>
-                <td class="p-3 text-right text-sm text-blue-700">+926,946원</td>
-                <td class="p-3 text-blue-900">예산 초과 없이 <strong>약 93만 원 흑자 마감 가능</strong></td>
-                <td class="p-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-bold">완전 방어 성공</span></td>
+              <tr class="bg-slate-900 text-white font-bold">
+                <td class="p-2.5 text-xs">최종 실질 차액 (② + ③ - ①)</td>
+                <td class="p-2.5 text-right text-xs text-amber-300 font-black" id="tableFinalNetDiff">-4,546,254</td>
+                <td class="p-2.5 text-slate-300 text-[11px]">대출 없이 당일 신랑·신부 개인 축의금으로 상계 정산 종결</td>
+                <td class="p-2.5 text-center"><span class="px-1.5 py-0.5 rounded bg-amber-500 text-white font-bold text-[9px]">축의금 충당</span></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="mt-4 p-3 bg-slate-50 rounded-xl text-xs text-slate-600 space-y-1">
-          <p class="font-bold text-slate-800">📌 최종 자금 운용 실행 가이드:</p>
-          <p>1. <strong>2026년 하반기:</strong> 세이프박스(1,100만 원)에서 2026년 잔여 지출 6,071,400원을 먼저 결제하여 안심하고 진행합니다.</p>
-          <p>2. <strong>2026.10 ~ 2027.03:</strong> 매달 100만 원씩 통장 자동이체하여 600만 원을 적립합니다.</p>
-          <p>3. <strong>2027년 1~2월:</strong> 신혼여행 잔금(1,032만 원) 납부 일자에 맞춰 펀드 해지(300만 원)와 연금보험 약관대출(450만 원)을 가동합니다.</p>
-          <p>4. <strong>본식 당일:</strong> 식대 1,110만 원은 접수대 축의금으로 결제하므로 사전 현금 유동성 부족 없이 여유롭게 마무리됩니다.</p>
+        <!-- Mobile View: Card Stack -->
+        <div class="sm:hidden space-y-2 text-xs">
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+            <div class="flex justify-between items-center font-bold text-slate-900">
+              <span>① 필요 총 잔여 예산</span>
+              <span class="text-slate-900 font-black">32,525,800원</span>
+            </div>
+            <div class="text-[10px] text-slate-500">4월 이전 1,372만 + 4월 본식·신행 1,880만 원</div>
+          </div>
+
+          <div class="p-2.5 bg-indigo-50/50 rounded-lg border border-indigo-200 space-y-1.5">
+            <div class="flex justify-between items-center font-bold text-indigo-900">
+              <span>② 자체 조달 자금 합계</span>
+              <span class="text-indigo-700 font-black">18,379,546원</span>
+            </div>
+            <div class="text-[10px] text-slate-600 space-y-0.5 pt-1 border-t border-indigo-100">
+              <div class="flex justify-between"><span>• 세이프박스 실잔액</span><span class="font-bold text-emerald-700">9,379,546원</span></div>
+              <div class="flex justify-between"><span>• 6개월 정기 적립</span><span class="font-bold text-blue-700">6,000,000원</span></div>
+              <div class="flex justify-between"><span>• 개인 펀드 해지</span><span class="font-bold text-indigo-700">3,000,000원</span></div>
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-emerald-900">③ 본식 식대 축의금 상계</div>
+              <div class="text-[10px] text-emerald-700">150명 보증인원 현장 결제</div>
+            </div>
+            <span class="font-black text-emerald-700">+9,600,000원</span>
+          </div>
+
+          <div class="p-3 bg-slate-900 text-white rounded-xl space-y-1">
+            <div class="flex justify-between items-baseline">
+              <span class="text-xs font-bold text-slate-200">최종 차액 (②+③-①)</span>
+              <span class="text-base font-black text-amber-300" id="tableFinalNetDiffMobile">-4,546,254원</span>
+            </div>
+            <p class="text-[10px] text-slate-300">
+              당일 신랑·신부 개인 축의금으로 즉시 상계되어 대출 없이 마감됩니다.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1108,54 +734,334 @@
 
   </main>
 
+  <!-- ================= MOBILE FIXED BOTTOM TAB BAR ================= -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-1.5 shadow-lg flex items-center justify-around mobile-bottom-nav">
+    <button id="mobile-tab-btn-1" onclick="switchTab(1)" 
+      class="flex-1 flex flex-col items-center justify-center py-1 rounded-lg text-indigo-600 transition-colors">
+      <i data-lucide="clock-arrow-up" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-0.5">1. 4월 이전</span>
+    </button>
+    <button id="mobile-tab-btn-2" onclick="switchTab(2)" 
+      class="flex-1 flex flex-col items-center justify-center py-1 rounded-lg text-slate-500 transition-colors">
+      <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5">2. 4월 본식</span>
+    </button>
+    <button id="mobile-tab-btn-3" onclick="switchTab(3)" 
+      class="flex-1 flex flex-col items-center justify-center py-1 rounded-lg text-slate-500 transition-colors">
+      <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium mt-0.5">3. 자금 종합</span>
+    </button>
+  </nav>
+
+  <!-- ================= EXCEL/CSV DATA SYNC MODAL ================= -->
+  <div id="uploadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3.5 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-3.5">
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm sm:text-base">엑셀/CSV 데이터 연동</h3>
+            <p class="text-[10px] sm:text-xs text-slate-500">엑셀 파일을 업로드하여 대시보드를 갱신합니다.</p>
+          </div>
+        </div>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-colors space-y-1.5">
+        <i data-lucide="cloud-upload" class="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600 mx-auto"></i>
+        <div class="text-xs font-bold text-slate-700">클릭하여 파일 선택 또는 드래그</div>
+        <p class="text-[10px] text-slate-400">지원 형식: .xlsx, .xls, .csv</p>
+        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event)">
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+        <label class="text-[11px] font-bold text-slate-700 block">세이프박스 실잔액 수동 업데이트 (원)</label>
+        <div class="flex items-center gap-2">
+          <input type="number" id="manualSafeboxInput" value="9379546" class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:border-indigo-600 font-bold text-slate-900">
+          <button onclick="updateManualSafebox()" class="text-xs font-bold px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors">
+            반영
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeUploadModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Footer -->
-  <footer class="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <div>© 2026 Wedding Financial Planning Studio. All rights reserved.</div>
-      <div class="flex items-center gap-4">
-        <span>세이프박스: 11,009,546원</span>
-        <span>•</span>
+  <footer class="mt-auto border-t border-slate-200 bg-white py-3 text-center text-[10px] sm:text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-3 flex flex-col sm:flex-row justify-between items-center gap-1">
+      <div>© 2026-2027 Wedding Dashboard. Mobile-Optimized Edition.</div>
+      <div class="flex items-center gap-2">
         <span>총 예산: 49,452,680원</span>
+        <span>•</span>
+        <span>세이프박스: 9,379,546원</span>
       </div>
     </div>
   </footer>
 
+  <!-- ================= APPLICATION LOGIC SCRIPT ================= -->
   <script>
-    // Lucide Icons initialization
-    lucide.createIcons();
+    let appState = {
+      safeboxBalance: 9379546,
+      
+      preAprilCategories: [
+        {
+          id: 'pre_honeymoon',
+          name: '신혼여행 (사전 완납)',
+          icon: 'plane',
+          total: 13300000,
+          paid: 3489400,
+          remain: 9810600,
+          items: [
+            { name: '파리 & 이탈리아 왕복 항공료', estimate: 2989400, paid: 2989400, remain: 0, timeline: '2026.06 완료', note: '결제 완료' },
+            { name: '파리 & 이탈리아 패키지 예약금', estimate: 500000, paid: 500000, remain: 0, timeline: '2026.06 완료', note: '계약금 납부' },
+            { name: '파리 & 이탈리아 패키지 잔금', estimate: 9810600, paid: 0, remain: 9810600, timeline: '2027.03 예정', note: '출발 30일 전 완납 (27.3.10)' }
+          ]
+        },
+        {
+          id: 'pre_parents',
+          name: '부모님 (사전 준비)',
+          icon: 'heart-handshake',
+          total: 4475000,
+          paid: 3793000,
+          remain: 682000,
+          items: [
+            { name: '어머니 페라가모 가방', estimate: 1269000, paid: 1269000, remain: 0, timeline: '2026 완료', note: '시어머니 선물' },
+            { name: '장모님 페라가모 가방', estimate: 1269000, paid: 1269000, remain: 0, timeline: '2026 완료', note: '장모님 선물' },
+            { name: '아버지 맞춤 양복', estimate: 700000, paid: 700000, remain: 0, timeline: '2026 완료', note: '시아버지 정장' },
+            { name: '상견례 식사비', estimate: 475000, paid: 475000, remain: 0, timeline: '2026 완료', note: '상견례 완료' },
+            { name: '장인어른 선물 (정장 잔액)', estimate: 762000, paid: 80000, remain: 682000, timeline: '2026.11~12 예정', note: '하반기 집행' }
+          ]
+        },
+        {
+          id: 'pre_ring',
+          name: '예복예물 (완납)',
+          icon: 'sparkle',
+          total: 6287680,
+          paid: 6287680,
+          remain: 0,
+          items: [
+            { name: '트라비체 커플링 (웨딩밴드)', estimate: 3806000, paid: 3806000, remain: 0, timeline: '2026 완료', note: '완납 완료' },
+            { name: '남자 맞춤 예복 정장', estimate: 1790000, paid: 1790000, remain: 0, timeline: '2026 완료', note: '10/4 이체' },
+            { name: '남자 구두', estimate: 300000, paid: 300000, remain: 0, timeline: '2026 완료', note: '10/4 완납' },
+            { name: '남자 예복 벨트', estimate: 391680, paid: 391680, remain: 0, timeline: '2026 완료', note: '세이프박스 결제' }
+          ]
+        },
+        {
+          id: 'pre_sdm',
+          name: '스드메 (스튜디오 촬영)',
+          icon: 'camera',
+          total: 600000,
+          paid: 1701800,
+          remain: -1101800,
+          items: [
+            { name: '프리미엄 스튜디오 (어반)', estimate: 300000, paid: 850900, remain: -550900, timeline: '2026.10 완료', note: '옵션 선집행' },
+            { name: '가발 대여', estimate: 50000, paid: 50000, remain: 0, timeline: '2026.10 완료', note: '결제 완료' },
+            { name: '스튜디오 도우미', estimate: 250000, paid: 800900, remain: -550900, timeline: '2026.10 완료', note: '현장 지급분' }
+          ]
+        },
+        {
+          id: 'pre_etc',
+          name: '사전 준비 잡비 & 청첩장',
+          icon: 'mail',
+          total: 2080000,
+          paid: 655000,
+          remain: 1425000,
+          items: [
+            { name: '모바일 청첩장 제작', estimate: 80000, paid: 0, remain: 80000, timeline: '2027.02 예정', note: '청첩장 발송' },
+            { name: '기타 잡비 (사전 모임/답례)', estimate: 2000000, paid: 655000, remain: 1345000, timeline: '2026 잔여', note: '촬영 도우미 답례 포함' }
+          ]
+        }
+      ],
 
-    // Tab Switching Function
-    function switchTab(tabNumber) {
-      const tab1Content = document.getElementById('tab-content-1');
-      const tab2Content = document.getElementById('tab-content-2');
-      const tab1Btn = document.getElementById('tab-btn-1');
-      const tab2Btn = document.getElementById('tab-btn-2');
+      postAprilCategories: [
+        {
+          id: 'post_meal',
+          name: '식대 & 답례품 (축의금 상계)',
+          icon: 'utensils',
+          total: 11100000,
+          paid: 0,
+          remain: 11100000,
+          items: [
+            { name: '하객 식대 (150명 보증인원)', estimate: 9600000, paid: 0, remain: 9600000, timeline: '2027.04 본식 당일', note: '접수대 축의금 현장 즉시 상계' },
+            { name: '고급 답례품 (호두정과 300세트)', estimate: 1500000, paid: 0, remain: 1500000, timeline: '2027.04 본식 당일', note: '축의금 결제 가능' }
+          ]
+        },
+        {
+          id: 'post_honeymoon',
+          name: '신혼여행 현지 체류비 (환전)',
+          icon: 'compass',
+          total: 3500000,
+          paid: 0,
+          remain: 3500000,
+          items: [
+            { name: '현지 체류비 (식비/쇼핑 12박)', estimate: 3500000, paid: 0, remain: 3500000, timeline: '2027.04 출국 직전', note: '외화 환전 준비' }
+          ]
+        },
+        {
+          id: 'post_hall',
+          name: '예식홀 대관료 잔금 및 연출',
+          icon: 'landmark',
+          total: 4190000,
+          paid: 1000000,
+          remain: 3190000,
+          items: [
+            { name: '웨딩홀 대관 계약금', estimate: 1000000, paid: 1000000, remain: 0, timeline: '2026 완료', note: '계약금 결제 완료' },
+            { name: '웨딩홀 대관료 잔금', estimate: 2690000, paid: 0, remain: 2690000, timeline: '2027.04 본식 당일', note: '현장 정산' },
+            { name: '웨딩컨시어즈 (도우미)', estimate: 350000, paid: 0, remain: 350000, timeline: '2027.04 본식 당일', note: '현장 지급' },
+            { name: '플라워 & 버블샤워', estimate: 150000, paid: 0, remain: 150000, timeline: '2027.04 본식 당일', note: '연출 잔금' }
+          ]
+        },
+        {
+          id: 'post_sdm',
+          name: '스드메 (본식 드레스·메이크업)',
+          icon: 'sparkles',
+          total: 2200000,
+          paid: 0,
+          remain: 2200000,
+          items: [
+            { name: '드레스 & 헤어메이크업 (패키지)', estimate: 2200000, paid: 0, remain: 2200000, timeline: '2027.04 본식 당일', note: '식장 패키지 잔금' }
+          ]
+        },
+        {
+          id: 'post_snap_family',
+          name: '스냅·DVD / 혼주 / 당일 도우미',
+          icon: 'users',
+          total: 1810000,
+          paid: 0,
+          remain: 1810000,
+          items: [
+            { name: '본식스냅 원본 & 앨범 잔금', estimate: 250000, paid: 0, remain: 250000, timeline: '2027.04 본식 직후', note: '결과물 수령' },
+            { name: '본식 DVD 영상 잔금', estimate: 500000, paid: 0, remain: 500000, timeline: '2027.04 본식 직후', note: '영상 수령' },
+            { name: '혼주 메이크업 (여 2인)', estimate: 360000, paid: 0, remain: 360000, timeline: '2027.04 본식 당일', note: '인당 18만' },
+            { name: '혼주 메이크업 (남 2인)', estimate: 110000, paid: 0, remain: 110000, timeline: '2027.04 본식 당일', note: '인당 5.5만' },
+            { name: '혼주 한복 (양가 어머님)', estimate: 500000, paid: 500000, remain: 0, timeline: '2027.04 본식 당일', note: '포인트 완납 완료' },
+            { name: '축가 사례비', estimate: 300000, paid: 0, remain: 300000, timeline: '2027.04 본식 당일', note: '현금 봉투' },
+            { name: '본식 드레스 도우미 헬퍼비', estimate: 200000, paid: 0, remain: 200000, timeline: '2027.04 본식 당일', note: '현장 지급' },
+            { name: '기본/서비스 (사회자 등)', estimate: 0, paid: 0, remain: 0, timeline: '2027.04 본식 당일', note: '무료 포함' }
+          ]
+        }
+      ]
+    };
 
-      if (tabNumber === 1) {
-        tab1Content.classList.remove('hidden');
-        tab2Content.classList.add('hidden');
-        
-        tab1Btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-blue-600 shadow-sm border border-slate-200/50";
-        tab2Btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
-      } else {
-        tab1Content.classList.add('hidden');
-        tab2Content.classList.remove('hidden');
+    function renderAccordionsGroup(containerId, categories, prefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
 
-        tab2Btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-blue-600 shadow-sm border border-slate-200/50";
-        tab1Btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
-      }
+      categories.forEach(cat => {
+        const pct = cat.total > 0 ? ((cat.paid / cat.total) * 100).toFixed(1) : 0;
+        const isCompleted = cat.remain === 0;
 
-      // Re-trigger icon creation in case tab content changed
-      setTimeout(() => {
-        lucide.createIcons();
-      }, 50);
+        const html = `
+          <div class="accordion-item transition-colors hover:bg-slate-50/60">
+            <button onclick="toggleSingleAccordion('${prefix}_${cat.id}')" class="w-full px-3.5 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between text-left gap-2 focus:outline-none">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                  <i data-lucide="${cat.icon}" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-slate-900 text-xs sm:text-sm truncate">${cat.name}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">
+                      ${pct}%
+                    </span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 sm:hidden">
+                    잔여: <strong class="${cat.remain > 0 ? 'text-slate-800' : 'text-slate-400'}">${cat.remain.toLocaleString()}원</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="hidden sm:grid grid-cols-3 gap-4 text-right text-xs">
+                  <div>
+                    <div class="text-[10px] text-slate-400">총 예산</div>
+                    <div class="font-semibold text-slate-700">${cat.total.toLocaleString()}원</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] text-slate-400">누적 지출</div>
+                    <div class="font-semibold text-blue-600">${cat.paid.toLocaleString()}원</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] text-slate-400">잔여액</div>
+                    <div class="font-bold ${cat.remain > 0 ? 'text-slate-900' : 'text-slate-400'}">${cat.remain.toLocaleString()}원</div>
+                  </div>
+                </div>
+                <i data-lucide="chevron-down" id="chevron-${prefix}_${cat.id}" class="rotate-chevron w-4 h-4 text-slate-400 shrink-0"></i>
+              </div>
+            </button>
+            <div id="content-${prefix}_${cat.id}" class="accordion-content bg-slate-50/70 border-t border-slate-100 px-3 sm:px-6">
+              
+              <!-- Desktop Table View -->
+              <div class="hidden sm:block py-3 overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-400 border-b border-slate-200 text-[11px]">
+                      <th class="py-2">세부 품목</th>
+                      <th class="py-2 text-right">견적 소요액</th>
+                      <th class="py-2 text-right">기결제액</th>
+                      <th class="py-2 text-right">잔여액</th>
+                      <th class="py-2 text-center">집행 시기</th>
+                      <th class="py-2">비고 및 상태</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${cat.items.map(it => `
+                      <tr>
+                        <td class="py-2 font-semibold text-slate-800">${it.name}</td>
+                        <td class="py-2 text-right text-slate-600">${it.estimate.toLocaleString()}원</td>
+                        <td class="py-2 text-right font-medium text-blue-600">${it.paid.toLocaleString()}원</td>
+                        <td class="py-2 text-right font-bold ${it.remain < 0 ? 'text-rose-600' : (it.remain > 0 ? 'text-slate-900' : 'text-slate-400')}">${it.remain.toLocaleString()}원</td>
+                        <td class="py-2 text-center text-slate-500 font-medium">${it.timeline}</td>
+                        <td class="py-2 text-slate-500">${it.note}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile Card Stack View -->
+              <div class="sm:hidden py-2.5 space-y-2">
+                ${cat.items.map(it => `
+                  <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 text-xs space-y-1">
+                    <div class="flex justify-between items-start">
+                      <span class="font-bold text-slate-800">${it.name}</span>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">${it.timeline}</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                      <span>견적: ${it.estimate.toLocaleString()}원</span>
+                      <span>기결제: <strong class="text-blue-600">${it.paid.toLocaleString()}원</strong></span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 border-t border-slate-100">
+                      <span class="text-[10px] text-slate-400">${it.note || ''}</span>
+                      <span class="text-xs font-bold ${it.remain < 0 ? 'text-rose-600' : (it.remain > 0 ? 'text-slate-900' : 'text-slate-400')}">
+                        잔여 ${it.remain.toLocaleString()}원
+                      </span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+      });
     }
 
-    // Interactive Accordion Logic
-    function toggleAccordion(id) {
-      const content = document.getElementById(`content-${id}`);
-      const chevron = document.getElementById(`chevron-${id}`);
-      
+    function toggleSingleAccordion(fullId) {
+      const content = document.getElementById(`content-${fullId}`);
+      const chevron = document.getElementById(`chevron-${fullId}`);
+      if (!content || !chevron) return;
       const isOpen = content.classList.contains('open');
       if (isOpen) {
         content.classList.remove('open');
@@ -1166,12 +1072,11 @@
       }
     }
 
-    // Toggle All Accordions
-    function toggleAllAccordions(open) {
-      const items = ['item-honeymoon', 'item-meal', 'item-ring', 'item-parents', 'item-hall', 'item-sdm', 'item-dayetc', 'item-snap', 'item-family'];
-      items.forEach(id => {
-        const content = document.getElementById(`content-${id}`);
-        const chevron = document.getElementById(`chevron-${id}`);
+    function toggleGroupAccordions(prefix, open) {
+      const list = prefix === 'pre' ? appState.preAprilCategories : appState.postAprilCategories;
+      list.forEach(cat => {
+        const content = document.getElementById(`content-${prefix}_${cat.id}`);
+        const chevron = document.getElementById(`chevron-${prefix}_${cat.id}`);
         if (content && chevron) {
           if (open) {
             content.classList.add('open');
@@ -1184,149 +1089,202 @@
       });
     }
 
-    // Initialize Chart.js Graphs
-    window.addEventListener('DOMContentLoaded', () => {
-      // 1. Category Budget Doughnut Chart
-      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-      new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['신혼여행', '식대답례', '예복예물', '부모님', '예식홀', '스드메', '당일기타', '스냅영상', '혼주가족'],
-          datasets: [{
-            data: [16800000, 11100000, 6287680, 4475000, 4190000, 2800000, 2580000, 750000, 470000],
-            backgroundColor: [
-              '#38bdf8', // sky
-              '#f59e0b', // amber
-              '#10b981', // emerald
-              '#a855f7', // purple
-              '#6366f1', // indigo
-              '#ec4899', // pink
-              '#14b8a6', // teal
-              '#06b6d4', // cyan
-              '#f97316'  // orange
-            ],
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const val = context.raw;
-                  const total = 49452680;
-                  const pct = ((val / total) * 100).toFixed(1);
-                  return ` ${context.label}: ${val.toLocaleString()}원 (${pct}%)`;
-                }
-              }
-            }
-          },
-          cutout: '68%'
-        }
-      });
+    function switchTab(tabNum) {
+      const t1 = document.getElementById('tab-content-1');
+      const t2 = document.getElementById('tab-content-2');
+      const t3 = document.getElementById('tab-content-3');
 
-      // 2. Period Comparison Chart (2026 vs 2027)
-      const periodCtx = document.getElementById('periodComparisonChart').getContext('2d');
-      new Chart(periodCtx, {
-        type: 'bar',
-        data: {
-          labels: ['2026년 집행 대상', '2027년 집행 대상 (본식)'],
-          datasets: [
-            {
-              label: '기집행액 (원)',
-              data: [10280680, 4489400],
-              backgroundColor: '#3b82f6',
-              borderRadius: 6
-            },
-            {
-              label: '잔여 필요액 (원)',
-              data: [6071400, 28611200],
-              backgroundColor: '#cbd5e1',
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              stacked: true,
-              grid: { display: false }
-            },
-            y: {
-              stacked: true,
-              grid: { color: '#f1f5f9' },
-              ticks: {
-                callback: function(value) {
-                  return (value / 1000000).toFixed(0) + '백만';
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                font: { size: 11, family: 'Pretendard' },
-                boxWidth: 12
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return ` ${context.dataset.label}: ${context.raw.toLocaleString()}원`;
-                }
-              }
-            }
-          }
-        }
-      });
+      // Desktop tab buttons
+      const b1 = document.getElementById('tab-btn-1');
+      const b2 = document.getElementById('tab-btn-2');
+      const b3 = document.getElementById('tab-btn-3');
 
-      // 3. Funding Sources Doughnut Chart (Tab 2)
-      const fundingCtx = document.getElementById('fundingChart').getContext('2d');
-      new Chart(fundingCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['세이프박스 잔액', '6개월 정기예치', '연금보험 대출', '펀드 해지'],
-          datasets: [{
-            data: [11009546, 6000000, 4500000, 3000000],
-            backgroundColor: [
-              '#10b981', // emerald
-              '#3b82f6', // blue
-              '#f59e0b', // amber
-              '#6366f1'  // indigo
-            ],
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const val = context.raw;
-                  const total = 24509546;
-                  const pct = ((val / total) * 100).toFixed(1);
-                  return ` ${context.label}: ${val.toLocaleString()}원 (${pct}%)`;
-                }
-              }
-            }
-          },
-          cutout: '65%'
-        }
-      });
+      // Mobile bottom nav buttons
+      const mb1 = document.getElementById('mobile-tab-btn-1');
+      const mb2 = document.getElementById('mobile-tab-btn-2');
+      const mb3 = document.getElementById('mobile-tab-btn-3');
+
+      // Hide all tabs
+      t1.classList.add('hidden');
+      t2.classList.add('hidden');
+      t3.classList.add('hidden');
+
+      const dActive = "flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-xs border border-slate-200/80";
+      const dInactive = "flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
+
+      const mActive = "flex-1 flex flex-col items-center justify-center py-1 rounded-lg text-indigo-600 font-bold transition-colors";
+      const mInactive = "flex-1 flex flex-col items-center justify-center py-1 rounded-lg text-slate-500 font-medium transition-colors";
+
+      if (b1 && b2 && b3) {
+        b1.className = dInactive;
+        b2.className = dInactive;
+        b3.className = dInactive;
+      }
+      if (mb1 && mb2 && mb3) {
+        mb1.className = mInactive;
+        mb2.className = mInactive;
+        mb3.className = mInactive;
+      }
+
+      if (tabNum === 1) {
+        t1.classList.remove('hidden');
+        if (b1) b1.className = dActive;
+        if (mb1) mb1.className = mActive;
+      } else if (tabNum === 2) {
+        t2.classList.remove('hidden');
+        if (b2) b2.className = dActive;
+        if (mb2) mb2.className = mActive;
+      } else {
+        t3.classList.remove('hidden');
+        if (b3) b3.className = dActive;
+        if (mb3) mb3.className = mActive;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function updateSimulation() {
+      const monthlyDep = parseInt(document.getElementById('simDepositRange').value, 10);
+      const giftAmount = parseInt(document.getElementById('simGiftRange').value, 10);
+
+      const totalDep = monthlyDep * 6 * 10000;
+      const totalGift = giftAmount * 10000;
+      const fund = 3000000;
+      const safebox = appState.safeboxBalance;
+
+      document.getElementById('simDepositVal').innerText = `월 ${monthlyDep}만 (총 ${(totalDep/10000).toLocaleString()}만)`;
+      document.getElementById('simGiftVal').innerText = `${giftAmount.toLocaleString()}만 원`;
+
+      const selfFundTotal = safebox + totalDep + fund;
+      const grandTotalFund = selfFundTotal + totalGift;
+      const grandRemain = 32525800;
+      const netDiff = grandTotalFund - grandRemain;
+
+      const diffFormatted = (netDiff >= 0 ? '+' : '') + netDiff.toLocaleString() + '원';
+      document.getElementById('simNetDiffText').innerText = diffFormatted;
+      document.getElementById('tab3HeaderNetBalance').innerText = diffFormatted;
+      
+      const dt = document.getElementById('tableFinalNetDiff');
+      if (dt) dt.innerText = diffFormatted;
+      const mt = document.getElementById('tableFinalNetDiffMobile');
+      if (mt) mt.innerText = diffFormatted;
+
+      const resBox = document.getElementById('simResultBox');
+      const resText = document.getElementById('simResultText');
+      const netText = document.getElementById('simNetDiffText');
+
+      if (netDiff >= 0) {
+        resBox.className = "p-3.5 rounded-xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-50 border-emerald-300";
+        netText.className = "text-xl sm:text-2xl font-black text-emerald-700";
+        resText.innerHTML = `총 가용액(<strong class="text-slate-900">${(grandTotalFund/10000).toLocaleString()}만</strong>)으로 잔여 예산을 전액 자력 정산 후 <strong class="text-emerald-700 font-bold">${(netDiff/10000).toFixed(1)}만 흑자 마감</strong>됩니다.`;
+      } else {
+        resBox.className = "p-3.5 rounded-xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-3 bg-amber-50 border-amber-200";
+        netText.className = "text-xl sm:text-2xl font-black text-amber-700";
+        resText.innerHTML = `설정 기준 잔여 예산 대비 <strong class="text-amber-800 font-bold">${Math.abs(netDiff).toLocaleString()}원</strong> 충당 필요 (개인 축의금으로 상계).`;
+      }
+    }
+
+    function resetSimulator() {
+      document.getElementById('simDepositRange').value = 100;
+      document.getElementById('simGiftRange').value = 960;
+      updateSimulation();
+    }
+
+    function openUploadModal() {
+      document.getElementById('uploadModal').classList.remove('hidden');
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.add('hidden');
+    }
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-emerald-600', 'bg-emerald-50/50');
     });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-emerald-600', 'bg-emerald-50/50');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-emerald-600', 'bg-emerald-50/50');
+      if (e.dataTransfer.files.length) {
+        processUploadedFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function handleFileSelect(event) {
+      if (event.target.files.length) {
+        processUploadedFile(event.target.files[0]);
+      }
+    }
+
+    function processUploadedFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          workbook.SheetNames.forEach(sn => {
+            const ws = workbook.Sheets[sn];
+            const text = JSON.stringify(XLSX.utils.sheet_to_json(ws));
+            const match = text.match(/9[,\d]{5,}/);
+            if (match) {
+              const cleaned = parseInt(match[0].replace(/,/g, ''), 10);
+              if (cleaned > 5000000 && cleaned < 20000000) {
+                appState.safeboxBalance = cleaned;
+              }
+            }
+          });
+
+          renderAllViews();
+          closeUploadModal();
+          showFloatingToast(`'${file.name}' 데이터 반영 완료!`);
+        } catch (err) {
+          showFloatingToast('엑셀 파일을 읽는 중 오류가 발생했습니다.', true);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function updateManualSafebox() {
+      const val = parseInt(document.getElementById('manualSafeboxInput').value, 10);
+      if (!isNaN(val) && val >= 0) {
+        appState.safeboxBalance = val;
+        renderAllViews();
+        closeUploadModal();
+        showFloatingToast(`세이프박스가 ${val.toLocaleString()}원으로 갱신되었습니다.`);
+      }
+    }
+
+    function showFloatingToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 px-4 py-2.5 rounded-xl shadow-xl text-xs font-bold text-white transition-all transform duration-300 ${isError ? 'bg-rose-600' : 'bg-slate-900 border border-slate-700'}`;
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function renderAllViews() {
+      document.getElementById('headerSafebox').innerText = appState.safeboxBalance.toLocaleString() + '원';
+      renderAccordionsGroup('accordionPreApril', appState.preAprilCategories, 'pre');
+      renderAccordionsGroup('accordionPostApril', appState.postAprilCategories, 'post');
+      updateSimulation();
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    window.onload = function() {
+      renderAllViews();
+    };
   </script>
 </body>
 </html>
